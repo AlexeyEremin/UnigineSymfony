@@ -25,7 +25,44 @@ class UrlRepository extends ServiceEntityRepository
             ->andWhere('u.hash = :val')
             ->setParameter('val', $value)
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getOneOrNullResult();
+    }
+
+    public function findBetweenUniqueUrl($start, $end)
+    {
+        $bq = $this->getEntityManager();
+
+        return count(
+            $this->createQueryBuilder('u')
+                ->select('u.url')
+                ->add(
+                    'where',
+                    $bq->getExpressionBuilder()
+                        ->between('u.createdDate', ':start', ':end')
+                )
+                ->setParameter("start", $start)
+                ->setParameter("end", $end)
+                ->distinct()
+                ->getQuery()
+                ->getArrayResult()
+        );
+    }
+
+    public function findUniqueUrl(string $url): int
+    {
+        $uq = $this->createQueryBuilder('u');
+
+        return count(
+            $this->createQueryBuilder('u')
+                ->select('u.url')
+                ->distinct()
+                ->add(
+                    'where',
+                    $uq->expr()->like('u.url', ':url')
+                )
+                ->setParameter('url', "%{$url}%")
+                ->getQuery()
+                ->getArrayResult()
+        );
     }
 }
